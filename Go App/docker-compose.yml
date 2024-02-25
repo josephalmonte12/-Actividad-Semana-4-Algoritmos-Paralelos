@@ -1,0 +1,49 @@
+version: '3.7'
+
+services:
+  db:
+    container_name: "algoritmo_db"
+    platform: linux/x86_64
+    build:
+      context: .
+      dockerfile: db.Dockerfile
+    networks:
+      - default
+    restart: always
+    ports:
+      # <Puerto expuesto>: <Puerto MySQL ejecutándose dentro del contenedor>
+      - "3306:3306"
+    # setting some env vars to create the DB
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "1192948"
+      MYSQL_DATABASE: "paralelo_db"
+      MYSQL_USER: "joseph"
+      MYSQL_PASSWORD: "1192948"
+      # O si desea utilizar "root" como usuario, solo estas dos líneas
+      # MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      # MYSQL_DATABASE: ${DATABASE_NAME}
+
+    # montamos un volumen de datos para asegurarnos de no perder datos
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+  api:
+    container_name:  "test_api"
+    # queremos usar la imagen que se construye a partir de nuestro Dockerfile
+    build:
+      context: .
+      dockerfile: api.Dockerfile
+    ports:
+      - "5001:5001"
+    # Nosotros dependemos del backend mysql
+    depends_on:
+      - db
+    # Montamos el directorio de trabajo en el contenedor, útil para el desarrollo.
+    # Esto es lo que hace que la recarga en caliente funcione dentro de un contenedor Docker
+    volumes:
+      - .:/app/
+
+networks:
+  default:
+volumes:
+  mysql_data:
